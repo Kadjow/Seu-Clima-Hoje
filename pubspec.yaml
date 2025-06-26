@@ -63,12 +63,12 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
 assets:
-  lib/assets/chuva_forte.json
-  lib/assets/chuva_manha.json
-  lib/assets/chuva_noite.json
-  lib/assets/ensolarado.json
-  lib/assets/nuvens.json
-  lib/assets/trovao.json
+  - lib/assets/chuva_forte.json
+  - lib/assets/chuva_manha.json
+  - lib/assets/chuva_noite.json
+  - lib/assets/ensolarado.json
+  - lib/assets/nuvens.json
+  - lib/assets/trovao.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
