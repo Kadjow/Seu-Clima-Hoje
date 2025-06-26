@@ -33,7 +33,7 @@ class _WeatherPageState extends State<WeatherPage> {
   }
 
   String getWeatherAnimation(String? condition) {
-    if (condition == null) return 'lib/assets/ensolarado.json';
+    if (condition == null) return 'lib/assets/nuvens.json';
 
     switch (condition.toLowerCase()) {
       case 'clear':
@@ -52,18 +52,17 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[700],
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Nome da cidade
               Text(
                 _weather?.cityName ?? 'Carregando sua cidade...',
                 style: TextStyle(fontSize: 20),
               ),
 
-              // Animação com altura fixa para evitar overflow
               SizedBox(
                 height: 200,
                 child: Lottie.asset(
@@ -71,7 +70,6 @@ class _WeatherPageState extends State<WeatherPage> {
                 ),
               ),
 
-              // Temperatura (protected null-safety)
               Text(
                 _weather != null
                   ? '${_weather!.temperature.round()}°C'
@@ -79,7 +77,6 @@ class _WeatherPageState extends State<WeatherPage> {
                 style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
               ),
 
-              // Condição principal
               Text(
                 _weather?.condition ?? '',
                 style: TextStyle(fontSize: 18),
