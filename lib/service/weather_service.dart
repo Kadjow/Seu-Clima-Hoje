@@ -22,6 +22,18 @@ class WeatherService {
     }
   }
 
+  Future<Weather> getWeatherByCoords(double lat, double lon) async {
+    final uri = Uri.parse(
+      '$_baseUrl?lat=$lat%lon=$lat&lon=$lon&appid=$apiKey&units=metric',
+    );
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      return Weather.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Falha ao carregar o clima por coordenadas');
+    }
+  }
+
   Future<String> getCurrentCity() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
