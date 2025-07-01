@@ -28,6 +28,7 @@ class _WeatherPageState extends State<WeatherPage> {
     'fog': 'Nevoeiro',
     'haze': 'Neblina',
     'few clouds': 'Poucas Nuvens',
+    'clear sky' : 'Céu Limpo',
   };
 
   final Map<String, String> _animationMap = {
@@ -68,7 +69,6 @@ class _WeatherPageState extends State<WeatherPage> {
       final cityName = await _weatherService.getCityNameFromCoords(
         pos.latitude, pos.longitude,
       );
-
       setState(() {
         _weather     = weather;
         _displayCity = cityName.isNotEmpty ? cityName : weather.cityName;
@@ -133,68 +133,61 @@ class _WeatherPageState extends State<WeatherPage> {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      height: 200,
-                      child: Lottie.asset(_animFor(_weather?.condition)),
-                    ),
-                    const SizedBox(height: 24),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: bg.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
+                    if (_displayCity != null) ...[
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          Icon(
+                            Icons.location_on,
+                            color: isDayTime ? Colors.black87 : Colors.white,
+                          ),
+                          const SizedBox(width: 8),
                           Text(
-                            _displayCity ?? '—',
+                            _displayCity!,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: isDayTime ? Colors.black87 : Colors.white,
-                              shadows: const [
-                                Shadow(blurRadius: 4, color: Colors.black26)
-                              ],
-                            ),
-                          ),
-
-                          if (_accuracy != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isDayTime ? Colors.black54 : Colors.white70,
-                              ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            '${_weather!.temperature.round()}°C',
-                            style: TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w700,
-                              color: isDayTime ? Colors.black : Colors.white,
-                              shadows: const [
-                                Shadow(blurRadius: 4, color: Colors.black38)
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            _translate(_weather!.condition),
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: isDayTime ? Colors.black54 : Colors.white70,
+                              shadows: const [Shadow(blurRadius: 4, color: Colors.black26)],
                             ),
                           ),
                         ],
+                      ),
+                      if (_accuracy != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDayTime ? Colors.black54 : Colors.white70,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                    ],
+
+                    SizedBox(
+                      height: 200,
+                      child: Lottie.asset(_animFor(_weather?.condition)),
+                    ),
+                    const SizedBox(height: 32),
+
+                    Text(
+                      '${_weather!.temperature.round()}°C',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w700,
+                        color: isDayTime ? Colors.black : Colors.white,
+                        shadows: const [Shadow(blurRadius: 4, color: Colors.black38)],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    Text(
+                      _translate(_weather!.condition),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: isDayTime ? Colors.black54 : Colors.white70,
                       ),
                     ),
                   ],
