@@ -69,6 +69,7 @@ flutter:
     - lib/assets/ensolarado.json
     - lib/assets/nuvens.json
     - lib/assets/trovao.json
+    - lib/assets/nevoa.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -6,7 +6,6 @@ import 'package:geolocator/geolocator.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({Key? key}) : super(key: key);
-
   @override
   State<WeatherPage> createState() => _WeatherPageState();
 }
@@ -14,111 +13,192 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage> {
   final _weatherService = WeatherService('2498e270875324e27da2dda33001a50b');
   Weather? _weather;
+  String?  _displayCity;
+  double?  _accuracy;
+  bool     _loading = true;
+
+  final Map<String, String> _conditionPt = {
+    'clear': 'Ensolarado',
+    'clouds': 'Nublado',
+    'rain': 'Chuva',
+    'thunderstorm': 'Trovoada',
+    'mist': 'Névoa',
+    'drizzle': 'Chuvisco',
+    'snow': 'Neve',
+    'fog': 'Nevoeiro',
+    'haze': 'Neblina',
+    'few clouds': 'Poucas Nuvens',
+  };
+
+  final Map<String, String> _animationMap = {
+    'clear':       'lib/assets/ensolarado.json',
+    'clouds':      'lib/assets/nuvens.json',
+    'thunderstorm':'lib/assets/trovao.json',
+    'mist':        'lib/assets/nevoa.json',
+    'drizzle':     'lib/assets/chuva_manha.json',
+    'snow':        'lib/assets/neve.json',
+    'fog':         'lib/assets/nevoeiro.json',
+  };
 
   bool get isDayTime {
-    final hour = DateTime.now().hour;
-    return hour >= 6 && hour < 18;
+    final h = DateTime.now().hour;
+    return h >= 6 && h < 18;
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchWeatherByCoords();
+    _initLocationAndWeather();
   }
 
-  Future<void> _fetchWeatherByCoords() async {
+  Future<void> _initLocationAndWeather() async {
+    var perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
     try {
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      _accuracy = pos.accuracy;
 
-      final weather = await _weatherService.getWeatherByCoords(
-        pos.latitude,
-        pos.longitude,
+      final weather  = await _weatherService.getWeatherByCoords(
+        pos.latitude, pos.longitude,
+      );
+      final cityName = await _weatherService.getCityNameFromCoords(
+        pos.latitude, pos.longitude,
       );
 
-      setState(() => _weather = weather);
+      setState(() {
+        _weather     = weather;
+        _displayCity = cityName.isNotEmpty ? cityName : weather.cityName;
+        _loading     = false;
+      });
     } catch (e) {
+      setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao buscar dados do clima: $e')),
+        SnackBar(content: Text('Erro ao buscar clima: $e')),
       );
     }
   }
 
-  Color determineBackgroundColor(String? condition, bool isDay) {
-    if (condition == null) {
-      return isDay ? Colors.lightBlue.shade50 : Colors.blueGrey.shade900;
-    }
-
-    switch (condition.toLowerCase()) {
+  Color _bgColor(String? cond) {
+    final day = isDayTime;
+    if (cond == null) return day ? Colors.lightBlue.shade100 : Colors.blueGrey.shade900;
+    switch (cond.toLowerCase()) {
       case 'clear':
-        return isDay ? Colors.white : Colors.indigo.shade700;
+        return day ? Colors.yellow.shade100 : Colors.indigo.shade700;
       case 'clouds':
-        return isDay ? Colors.grey.shade300 : Colors.blueGrey.shade800;
+        return day ? Colors.grey.shade200   : Colors.blueGrey.shade800;
       case 'rain':
-        return isDay ? Colors.blue.shade200 : Colors.blueGrey.shade700;
+        return day ? Colors.lightBlue.shade200 : Colors.blueGrey.shade700;
       case 'thunderstorm':
-        return isDay ? Colors.blueGrey.shade400 : Colors.blueGrey.shade900;
+        return day ? Colors.blueGrey.shade300 : Colors.blueGrey.shade900;
       default:
-        return isDay ? Colors.lightBlue.shade100 : Colors.grey.shade900;
+        return day ? Colors.lightBlue.shade50  : Colors.grey.shade900;
     }
   }
 
-  String getWeatherAnimation(String? condition) {
-    if (condition == null) return 'lib/assets/nuvens.json';
-
-    switch (condition.toLowerCase()) {
-      case 'clear':
-        return 'lib/assets/ensolarado.json';
-      case 'clouds':
-        return 'lib/assets/nuvens.json';
-      case 'rain':
-        return 'lib/assets/chuva_manha.json';
-      case 'thunderstorm':
-        return 'lib/assets/trovao.json';
-      default:
-        return 'lib/assets/ensolarado.json';
+  String _animFor(String? cond) {
+    if (cond == null) return _animationMap['clear']!;
+    final key = cond.toLowerCase();
+    if (key == 'rain') {
+      return isDayTime
+        ? 'lib/assets/chuva_manha.json'
+        : 'lib/assets/chuva_noite.json';
     }
+    return _animationMap[key] ?? _animationMap['clear']!;
+  }
+
+  String _translate(String? cond) {
+    if (cond == null) return '';
+    final key = cond.toLowerCase();
+    return _conditionPt[key] ??
+      (key[0].toUpperCase() + key.substring(1));
   }
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = determineBackgroundColor(_weather?.condition, isDayTime);
+    final bg = _bgColor(_weather?.condition);
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: bg,
       body: SafeArea(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 500),
-          color: bgColor,
+          color: bg,
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _weather?.cityName ?? 'Carregando sua cidade...',
-                  style: const TextStyle(fontSize: 20),
-                ),
+            child: _loading
+              ? const CircularProgressIndicator()
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 200,
+                      child: Lottie.asset(_animFor(_weather?.condition)),
+                    ),
+                    const SizedBox(height: 24),
 
-                SizedBox(
-                  height: 200,
-                  child: Lottie.asset(getWeatherAnimation(_weather?.condition)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: bg.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            _displayCity ?? '—',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: isDayTime ? Colors.black87 : Colors.white,
+                              shadows: const [
+                                Shadow(blurRadius: 4, color: Colors.black26)
+                              ],
+                            ),
+                          ),
+
+                          if (_accuracy != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDayTime ? Colors.black54 : Colors.white70,
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 8),
+
+                          Text(
+                            '${_weather!.temperature.round()}°C',
+                            style: TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w700,
+                              color: isDayTime ? Colors.black : Colors.white,
+                              shadows: const [
+                                Shadow(blurRadius: 4, color: Colors.black38)
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          Text(
+                            _translate(_weather!.condition),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: isDayTime ? Colors.black54 : Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  _weather != null
-                      ? '${_weather!.temperature.round()}°C'
-                      : '—',
-                  style: const TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _weather?.condition ?? '',
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ],
-            ),
           ),
         ),
       ),
