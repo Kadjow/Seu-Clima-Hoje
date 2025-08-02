@@ -13,9 +13,9 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage> {
   final _weatherService = WeatherService('2498e270875324e27da2dda33001a50b');
   Weather? _weather;
-  String?  _displayCity;
-  double?  _accuracy;
-  bool     _loading = true;
+  String? _displayCity;
+  double? _accuracy;
+  bool _loading = true;
 
   final Map<String, String> _conditionPt = {
     'clear': 'Ensolarado',
@@ -28,17 +28,17 @@ class _WeatherPageState extends State<WeatherPage> {
     'fog': 'Nevoeiro',
     'haze': 'Neblina',
     'few clouds': 'Poucas Nuvens',
-    'clear sky' : 'Céu Limpo',
+    'clear sky': 'Céu Limpo',
   };
 
   final Map<String, String> _animationMap = {
-    'clear':       'lib/assets/ensolarado.json',
-    'clouds':      'lib/assets/nuvens.json',
-    'thunderstorm':'lib/assets/trovao.json',
-    'mist':        'lib/assets/nevoa.json',
-    'drizzle':     'lib/assets/chuva_manha.json',
-    'snow':        'lib/assets/neve.json',
-    'fog':         'lib/assets/nevoeiro.json',
+    'clear': 'lib/assets/ensolarado.json',
+    'clouds': 'lib/assets/nuvens.json',
+    'thunderstorm': 'lib/assets/trovao.json',
+    'mist': 'lib/assets/nevoa.json',
+    'drizzle': 'lib/assets/chuva_manha.json',
+    'snow': 'lib/assets/neve.json',
+    'fog': 'lib/assets/nevoeiro.json',
   };
 
   bool get isDayTime {
@@ -63,58 +63,71 @@ class _WeatherPageState extends State<WeatherPage> {
       );
       _accuracy = pos.accuracy;
 
-      final weather  = await _weatherService.getWeatherByCoords(
-        pos.latitude, pos.longitude,
+      final weather = await _weatherService.getWeatherByCoords(
+        pos.latitude,
+        pos.longitude,
       );
       final cityName = await _weatherService.getCityNameFromCoords(
-        pos.latitude, pos.longitude,
+        pos.latitude,
+        pos.longitude,
       );
       setState(() {
-        _weather     = weather;
+        _weather = weather;
         _displayCity = cityName.isNotEmpty ? cityName : weather.cityName;
-        _loading     = false;
+        _loading = false;
       });
     } catch (e) {
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao buscar clima: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao buscar clima: $e')));
     }
   }
 
   Color _bgColor(String? cond) {
     final day = isDayTime;
-    if (cond == null) return day ? Colors.lightBlue.shade100 : Colors.blueGrey.shade900;
+    if (cond == null)
+      return day ? Colors.lightBlue.shade100 : Colors.blueGrey.shade900;
     switch (cond.toLowerCase()) {
       case 'clear':
         return day ? Colors.yellow.shade100 : Colors.indigo.shade700;
       case 'clouds':
-        return day ? Colors.grey.shade200   : Colors.blueGrey.shade800;
+        return day ? Colors.grey.shade200 : Colors.blueGrey.shade800;
       case 'rain':
         return day ? Colors.lightBlue.shade200 : Colors.blueGrey.shade700;
       case 'thunderstorm':
         return day ? Colors.blueGrey.shade300 : Colors.blueGrey.shade900;
       default:
-        return day ? Colors.lightBlue.shade50  : Colors.grey.shade900;
+        return day ? Colors.lightBlue.shade50 : Colors.grey.shade900;
     }
   }
 
+  String _normalizedCondition(String? cond) {
+    if (cond == null) return 'clear';
+    final key = cond.toLowerCase().trim();
+    if (key.contains('cloud')) return 'clouds';
+    if (key.contains('rain')) return 'rain';
+    if (key.contains('thunder')) return 'thunderstorm';
+    if (key.contains('drizzle')) return 'drizzle';
+    if (key.contains('snow')) return 'snow';
+    if (key.contains('mist') || key.contains('fog') || key.contains('haze'))
+      return 'mist';
+    return key;
+  }
+
   String _animFor(String? cond) {
-    if (cond == null) return _animationMap['clear']!;
-    final key = cond.toLowerCase();
+    final key = _normalizedCondition(cond);
     if (key == 'rain') {
       return isDayTime
-        ? 'lib/assets/chuva_manha.json'
-        : 'lib/assets/chuva_noite.json';
+          ? 'lib/assets/chuva_manha.json'
+          : 'lib/assets/chuva_noite.json';
     }
     return _animationMap[key] ?? _animationMap['clear']!;
   }
 
   String _translate(String? cond) {
-    if (cond == null) return '';
-    final key = cond.toLowerCase();
-    return _conditionPt[key] ??
-      (key[0].toUpperCase() + key.substring(1));
+    final key = _normalizedCondition(cond);
+    return _conditionPt[key] ?? key[0].toUpperCase() + key.substring(1);
   }
 
   @override
@@ -128,70 +141,73 @@ class _WeatherPageState extends State<WeatherPage> {
           duration: const Duration(milliseconds: 500),
           color: bg,
           child: Center(
-            child: _loading
-              ? const CircularProgressIndicator()
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_displayCity != null) ...[
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: isDayTime ? Colors.black87 : Colors.white,
+            child:
+                _loading
+                    ? const CircularProgressIndicator()
+                    : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_displayCity != null) ...[
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                color:
+                                    isDayTime ? Colors.black87 : Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _displayCity!,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isDayTime ? Colors.black87 : Colors.white,
+                                  shadows: const [
+                                    Shadow(
+                                      blurRadius: 4,
+                                      color: Colors.black26,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _displayCity!,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: isDayTime ? Colors.black87 : Colors.white,
-                              shadows: const [Shadow(blurRadius: 4, color: Colors.black26)],
+                          if (_accuracy != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color:
+                                    isDayTime ? Colors.black54 : Colors.white70,
+                              ),
                             ),
-                          ),
+                          ],
+                          const SizedBox(height: 16),
                         ],
-                      ),
-                      if (_accuracy != null) ...[
-                        const SizedBox(height: 4),
+
+                        SizedBox(
+                          height: 200,
+                          child: Lottie.asset(_animFor(_weather?.condition)),
+                        ),
+                        const SizedBox(height: 32),
+
                         Text(
-                          'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
+                          '${_weather!.temperature.round()}°C',
                           style: TextStyle(
-                            fontSize: 14,
-                            color: isDayTime ? Colors.black54 : Colors.white70,
+                            fontSize: 48,
+                            fontWeight: FontWeight.w700,
+                            color: isDayTime ? Colors.black : Colors.white,
+                            shadows: const [
+                              Shadow(blurRadius: 4, color: Colors.black38),
+                            ],
                           ),
                         ),
+                        const SizedBox(height: 8),
                       ],
-                      const SizedBox(height: 16),
-                    ],
-
-                    SizedBox(
-                      height: 200,
-                      child: Lottie.asset(_animFor(_weather?.condition)),
                     ),
-                    const SizedBox(height: 32),
-
-                    Text(
-                      '${_weather!.temperature.round()}°C',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w700,
-                        color: isDayTime ? Colors.black : Colors.white,
-                        shadows: const [Shadow(blurRadius: 4, color: Colors.black38)],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Text(
-                      _translate(_weather!.condition),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: isDayTime ? Colors.black54 : Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
           ),
         ),
       ),

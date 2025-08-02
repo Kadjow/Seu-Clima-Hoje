@@ -22,7 +22,6 @@ class _SplashScreenState extends State<SplashScreen> {
         _controller.play();
       });
 
-    // Navega para a tela principal após 5 segundos
     Timer(const Duration(seconds: 5), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const WeatherPage()),
