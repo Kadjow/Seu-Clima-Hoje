@@ -4,6 +4,7 @@ import 'package:weather_app/effects/animated_weather_background.dart';
 import 'package:weather_app/service/weather_service.dart';
 import 'package:weather_app/models/weather_model.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:weather_app/pages/city_search_drawer.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({Key? key}) : super(key: key);
@@ -86,6 +87,22 @@ class _WeatherPageState extends State<WeatherPage> {
     }
   }
 
+  Future<void> _loadWeatherForCity(String city) async {
+    setState(() => _loading = true);
+    try {
+      final weather = await _weatherService.getWeatherByCity(city);
+      setState(() {
+        _weather = weather;
+        _displayCity = city;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Erro ao buscar clima: $e')));
+    }
+  }
+
   String _normalizedCondition(String? cond) {
     if (cond == null) return 'clear';
     final key = cond.toLowerCase().trim();
@@ -118,6 +135,22 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
+        ],
+      ),
+      endDrawer: CitySearchDrawer(
+        service: _weatherService,
+        onCitySelected: _loadWeatherForCity,
+      ),
       body: Stack(
         children: [
           // Fundo com efeitos animados

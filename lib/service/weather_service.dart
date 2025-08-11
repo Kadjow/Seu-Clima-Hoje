@@ -6,6 +6,7 @@ import 'package:weather_app/models/weather_model.dart';
 class WeatherService {
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
   static const String _geoUrl  = 'https://api.openweathermap.org/geo/1.0/reverse';
+  static const String _directGeoUrl = 'https://api.openweathermap.org/geo/1.0/direct';
   final String apiKey;
 
   WeatherService(this.apiKey);
@@ -19,6 +20,17 @@ class WeatherService {
       return Weather.fromJson(json.decode(response.body));
     }
     throw Exception('Erro ao carregar clima ($lat, $lon): ${response.statusCode}');
+  }
+
+  Future<Weather> getWeatherByCity(String city) async {
+    final uri =
+        Uri.parse('$_baseUrl?q=$city&appid=$apiKey&units=metric');
+    final response = await http.get(uri);
+    debugPrint('GET $uri → ${response.statusCode}');
+    if (response.statusCode == 200) {
+      return Weather.fromJson(json.decode(response.body));
+    }
+    throw Exception('Erro ao carregar clima ($city): ${response.statusCode}');
   }
 
   Future<String> getCityNameFromCoords(double lat, double lon) async {
@@ -35,5 +47,20 @@ class WeatherService {
       return '';
     }
     throw Exception('Erro no reverse geocode ($lat, $lon): ${response.statusCode}');
+  }
+
+  Future<List<String>> searchCities(String query) async {
+    final uri = Uri.parse(
+        '$_directGeoUrl?q=$query&limit=5&appid=$apiKey&lang=pt');
+    final response = await http.get(uri);
+    debugPrint('GET $uri → ${response.statusCode}');
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as List;
+      return data.map<String>((e) {
+        final local = (e['local_names']?['pt'] as String?) ?? e['name'];
+        return local as String;
+      }).toList();
+    }
+    throw Exception('Erro ao buscar cidades: ${response.statusCode}');
   }
 }
