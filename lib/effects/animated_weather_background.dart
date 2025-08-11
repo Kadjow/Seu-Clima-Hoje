@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:weather_app/effects/painters/animated_sun.dart';
 
 class AnimatedWeatherBackground extends StatefulWidget {
   final String condition;
@@ -80,6 +81,9 @@ class _AnimatedWeatherBackgroundState extends State<AnimatedWeatherBackground>
           color: _backgroundColor(),
           child: Stack(
             children: [
+              // 🌞 Sol animado
+              if (widget.condition == 'clear') const AnimatedSun(),
+
               // ☁️ Nuvens animadas
               if (widget.condition == 'clouds')
                 CustomPaint(
