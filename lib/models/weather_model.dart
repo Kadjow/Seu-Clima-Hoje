@@ -16,7 +16,7 @@ class Weather {
       cityName: json['name'],
       temperature: json['main']['temp'].toDouble(),
       condition: json['weather'][0]['description'],
-      iconUrl: 'http://openweathermap.org/img/wn/${json['weather'][0]['icon']}@2x.png',
+      iconUrl: 'https://openweathermap.org/img/wn/${json['weather'][0]['icon']}@2x.png',
     );
   }
 }
