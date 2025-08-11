@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'package:weather_app/effects/animated_weather_background.dart';
-import 'package:weather_app/service/weather_service.dart';
-import 'package:weather_app/models/weather_model.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import 'package:weather_app/effects/animated_weather_background.dart';
+import 'package:weather_app/models/user_model.dart';
+import 'package:weather_app/models/weather_model.dart';
+import 'package:weather_app/pages/profile_page.dart';
+import 'package:weather_app/service/weather_service.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({Key? key}) : super(key: key);
@@ -115,15 +118,20 @@ class _WeatherPageState extends State<WeatherPage> {
     return _conditionPt[key] ?? key[0].toUpperCase() + key.substring(1);
   }
 
+  double _displayTemp(double tempC, TemperatureUnit unit) {
+    return unit == TemperatureUnit.celsius ? tempC : tempC * 9 / 5 + 32;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserModel>();
     return Scaffold(
       body: Stack(
-        children: [
-          // Fundo com efeitos animados
-          AnimatedWeatherBackground(
-            condition: _normalizedCondition(_weather?.condition),
-          ),
+          children: [
+            // Fundo com efeitos animados
+            AnimatedWeatherBackground(
+              condition: _normalizedCondition(_weather?.condition),
+            ),
 
           SafeArea(
             child: Center(
@@ -167,13 +175,13 @@ class _WeatherPageState extends State<WeatherPage> {
 
                         const SizedBox(height: 16),
 
-                        Text(
-                          '${_weather!.temperature.round()}°C',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w700,
-                            color: isDayTime ? Colors.black : Colors.white,
-                            shadows: const [
+                          Text(
+                            '${_displayTemp(_weather!.temperature, user.unit).round()}°${user.unit == TemperatureUnit.celsius ? 'C' : 'F'}',
+                            style: TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w700,
+                              color: isDayTime ? Colors.black : Colors.white,
+                              shadows: const [
                               Shadow(blurRadius: 4, color: Colors.black38),
                             ],
                           ),
@@ -204,8 +212,31 @@ class _WeatherPageState extends State<WeatherPage> {
                     ),
             ),
           ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.cloud),
+            label: 'Clima',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
         ],
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            );
+          }
+        },
       ),
     );
   }
 }
+
