@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:weather_app/effects/animated_weather_background.dart';
 import 'package:weather_app/service/weather_service.dart';
 import 'package:weather_app/models/weather_model.dart';
 import 'package:geolocator/geolocator.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({Key? key}) : super(key: key);
+
   @override
   State<WeatherPage> createState() => _WeatherPageState();
 }
@@ -84,24 +86,6 @@ class _WeatherPageState extends State<WeatherPage> {
     }
   }
 
-  Color _bgColor(String? cond) {
-    final day = isDayTime;
-    if (cond == null)
-      return day ? Colors.lightBlue.shade100 : Colors.blueGrey.shade900;
-    switch (cond.toLowerCase()) {
-      case 'clear':
-        return day ? Colors.yellow.shade100 : Colors.indigo.shade700;
-      case 'clouds':
-        return day ? Colors.grey.shade200 : Colors.blueGrey.shade800;
-      case 'rain':
-        return day ? Colors.lightBlue.shade200 : Colors.blueGrey.shade700;
-      case 'thunderstorm':
-        return day ? Colors.blueGrey.shade300 : Colors.blueGrey.shade900;
-      default:
-        return day ? Colors.lightBlue.shade50 : Colors.grey.shade900;
-    }
-  }
-
   String _normalizedCondition(String? cond) {
     if (cond == null) return 'clear';
     final key = cond.toLowerCase().trim();
@@ -110,8 +94,9 @@ class _WeatherPageState extends State<WeatherPage> {
     if (key.contains('thunder')) return 'thunderstorm';
     if (key.contains('drizzle')) return 'drizzle';
     if (key.contains('snow')) return 'snow';
-    if (key.contains('mist') || key.contains('fog') || key.contains('haze'))
+    if (key.contains('mist') || key.contains('fog') || key.contains('haze')) {
       return 'mist';
+    }
     return key;
   }
 
@@ -132,67 +117,55 @@ class _WeatherPageState extends State<WeatherPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = _bgColor(_weather?.condition);
-
     return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 500),
-          color: bg,
-          child: Center(
-            child:
-                _loading
-                    ? const CircularProgressIndicator()
-                    : Column(
+      body: Stack(
+        children: [
+          // Fundo com efeitos animados
+          AnimatedWeatherBackground(
+            condition: _normalizedCondition(_weather?.condition),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: _loading
+                  ? const CircularProgressIndicator()
+                  : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_displayCity != null) ...[
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                color:
-                                    isDayTime ? Colors.black87 : Colors.white,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _displayCity!,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      isDayTime ? Colors.black87 : Colors.white,
-                                  shadows: const [
-                                    Shadow(
-                                      blurRadius: 4,
-                                      color: Colors.black26,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_accuracy != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color:
-                                    isDayTime ? Colors.black54 : Colors.white70,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 16),
-                        ],
+                        // Botão de teste para alternar entre climas
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              final testConditions = [
+                                'clear',
+                                'clouds',
+                                'rain',
+                                'snow',
+                                'mist',
+                                'thunderstorm'
+                              ];
+                              final currentIndex = testConditions.indexOf(
+                                  _normalizedCondition(_weather?.condition));
+                              final next =
+                                  (currentIndex + 1) % testConditions.length;
+                              _weather = Weather(
+                                cityName: _displayCity ?? "Cidade Teste",
+                                temperature: 20,
+                                condition: testConditions[next],
+                                iconUrl: '', 
+                              );
+                            });
+                          },
+                          child: const Text('Alterar Clima (Teste)'),
+                        ),
+                        const SizedBox(height: 16),
 
                         SizedBox(
                           height: 200,
                           child: Lottie.asset(_animFor(_weather?.condition)),
                         ),
-                        const SizedBox(height: 32),
+
+                        const SizedBox(height: 16),
 
                         Text(
                           '${_weather!.temperature.round()}°C',
@@ -206,10 +179,32 @@ class _WeatherPageState extends State<WeatherPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
+
+                        Text(
+                          '${_translate(_weather?.condition)} - ${isDayTime ? "Dia" : "Noite"}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: isDayTime ? Colors.black87 : Colors.white70,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+
+                        if (_accuracy != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Precisão: ${_accuracy!.toStringAsFixed(1)} m',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  isDayTime ? Colors.black54 : Colors.white70,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
