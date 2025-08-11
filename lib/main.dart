@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:weather_app/context/animation_context.dart';
 import 'package:weather_app/pages/weather_page.dart';
 import 'package:weather_app/splash/splash_screen.dart';
 
@@ -12,9 +13,11 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+    return AnimationContext(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: SplashScreen(),
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:weather_app/context/animation_context.dart';
 import 'package:weather_app/effects/animated_weather_background.dart';
 import 'package:weather_app/service/weather_service.dart';
 import 'package:weather_app/models/weather_model.dart';
@@ -117,14 +118,24 @@ class _WeatherPageState extends State<WeatherPage> {
 
   @override
   Widget build(BuildContext context) {
+    final animCtx = AnimationContext.of(context);
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Clima'),
+        actions: [
+          IconButton(
+            icon: Icon(animCtx.enabled
+                ? Icons.motion_photos_on
+                : Icons.motion_photos_off),
+            onPressed: () => animCtx.toggle(),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
-          // Fundo com efeitos animados
           AnimatedWeatherBackground(
             condition: _normalizedCondition(_weather?.condition),
           ),
-
           SafeArea(
             child: Center(
               child: _loading
@@ -132,7 +143,6 @@ class _WeatherPageState extends State<WeatherPage> {
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Botão de teste para alternar entre climas
                         ElevatedButton(
                           onPressed: () {
                             setState(() {
@@ -152,21 +162,21 @@ class _WeatherPageState extends State<WeatherPage> {
                                 cityName: _displayCity ?? "Cidade Teste",
                                 temperature: 20,
                                 condition: testConditions[next],
-                                iconUrl: '', 
+                                iconUrl: '',
                               );
                             });
                           },
                           child: const Text('Alterar Clima (Teste)'),
                         ),
                         const SizedBox(height: 16),
-
                         SizedBox(
                           height: 200,
-                          child: Lottie.asset(_animFor(_weather?.condition)),
+                          child: Lottie.asset(
+                            _animFor(_weather?.condition),
+                            animate: animCtx.enabled,
+                          ),
                         ),
-
                         const SizedBox(height: 16),
-
                         Text(
                           '${_weather!.temperature.round()}°C',
                           style: TextStyle(
@@ -179,7 +189,6 @@ class _WeatherPageState extends State<WeatherPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-
                         Text(
                           '${_translate(_weather?.condition)} - ${isDayTime ? "Dia" : "Noite"}',
                           style: TextStyle(
@@ -188,7 +197,6 @@ class _WeatherPageState extends State<WeatherPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-
                         if (_accuracy != null) ...[
                           const SizedBox(height: 4),
                           Text(
