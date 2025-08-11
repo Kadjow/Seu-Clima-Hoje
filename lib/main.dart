@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:weather_app/pages/weather_page.dart';
+import 'package:provider/provider.dart';
+import 'package:weather_app/models/user_model.dart';
 import 'package:weather_app/splash/splash_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => UserModel(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
-    );
-  }
+    @override
+    Widget build(BuildContext context) {
+      final user = context.watch<UserModel>();
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: user.darkMode ? ThemeMode.dark : ThemeMode.light,
+        home: SplashScreen(),
+      );
+    }
 }
   
