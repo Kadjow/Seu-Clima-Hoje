@@ -51,13 +51,14 @@ class _SunPainter extends CustomPainter {
     final center = Offset(size.width * 0.5, size.height * 0.25);
     const sunRadius = 60.0;
 
-    // Gradiente de fundo (céu animado)
+    // Gradiente de fundo animado simulando calor
+    final heat = (sin(progress * 2 * pi) + 1) / 2;
     final gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        Color.lerp(Colors.lightBlue.shade300, Colors.lightBlue.shade400, progress)!,
-        Color.lerp(Colors.lightBlue.shade200, Colors.lightBlue.shade300, progress)!,
+        Color.lerp(Colors.orange.shade200, Colors.deepOrange.shade400, heat)!,
+        Color.lerp(Colors.yellow.shade200, Colors.red.shade300, heat)!,
       ],
     );
 
@@ -75,13 +76,14 @@ class _SunPainter extends CustomPainter {
 
     canvas.drawCircle(center, sunRadius, sunPaint);
 
-    // Raios do sol animados
-    final raysPaint = Paint()
-      ..color = Colors.yellow.withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
+    // Raios do sol animados e pulsantes
     const raysCount = 24;
+    final pulse = (sin(progress * 2 * pi) + 1) / 2;
+    final raysPaint = Paint()
+      ..color = Colors.yellow.withOpacity(0.4 + 0.4 * pulse)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2 + 2 * pulse;
+
     for (int i = 0; i < raysCount; i++) {
       final angle = (2 * pi * i / raysCount) + (progress * 2 * pi);
       final start = Offset(
@@ -89,8 +91,8 @@ class _SunPainter extends CustomPainter {
         center.dy + sin(angle) * (sunRadius + 5),
       );
       final end = Offset(
-        center.dx + cos(angle) * (sunRadius + 20),
-        center.dy + sin(angle) * (sunRadius + 20),
+        center.dx + cos(angle) * (sunRadius + 20 + 10 * pulse),
+        center.dy + sin(angle) * (sunRadius + 20 + 10 * pulse),
       );
       canvas.drawLine(start, end, raysPaint);
     }
