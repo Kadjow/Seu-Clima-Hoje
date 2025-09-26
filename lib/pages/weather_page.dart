@@ -130,12 +130,10 @@ class _WeatherPageState extends State<WeatherPage> {
           child: Center(
             child: _loading
               ? const CircularProgressIndicator()
-              : (_weather == null)
-                  ? const Text('Erro ao carregar clima')
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_displayCity != null) ...[
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_displayCity != null) ...[
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
