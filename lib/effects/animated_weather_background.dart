@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:weather_app/context/animation_context.dart';
 import 'package:weather_app/effects/painters/animated_sun.dart';
 
 class AnimatedWeatherBackground extends StatefulWidget {
@@ -36,12 +37,26 @@ class _AnimatedWeatherBackgroundState extends State<AnimatedWeatherBackground>
           }
         }
         setState(() {});
-      })
-      ..repeat();
+      });
 
     for (int i = 0; i < 100; i++) {
       _particles.add(_Particle(_random));
     }
+  }
+
+  void _updateAnimationStatus() {
+    final enabled = AnimationContext.of(context).enabled;
+    if (enabled && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!enabled && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateAnimationStatus();
   }
 
   @override
@@ -70,6 +85,10 @@ class _AnimatedWeatherBackgroundState extends State<AnimatedWeatherBackground>
 
   @override
   Widget build(BuildContext context) {
+    final animEnabled = AnimationContext.of(context).enabled;
+    if (!animEnabled) {
+      return Container(color: _backgroundColor());
+    }
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -81,23 +100,16 @@ class _AnimatedWeatherBackgroundState extends State<AnimatedWeatherBackground>
           color: _backgroundColor(),
           child: Stack(
             children: [
-              // 🌞 Sol animado
               if (widget.condition == 'clear') const AnimatedSun(),
-
-              // ☁️ Nuvens animadas
               if (widget.condition == 'clouds')
                 CustomPaint(
                   painter: _CloudPainter(_controller.value),
                   size: Size.infinite,
                 ),
-
-              // 🌧️ Partículas de clima
               CustomPaint(
                 painter: _WeatherPainter(widget.condition, _particles),
                 size: Size.infinite,
               ),
-
-              // ⚡ Relâmpagos
               if (widget.condition == 'thunderstorm')
                 Container(
                   color: Colors.white.withOpacity(_lightningOpacity),
